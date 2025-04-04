@@ -5,35 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Finance Tracker{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-****" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
     <style>
-        * {
-            font-family: 'Poppins', sans-serif;
-        }
-        .navbar-brand {
-            font-weight: bold;
-            font-size: 1.5rem; /* Adjust the font size as needed */
-        }
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        .container {
-            flex: 1;
-        }
-        footer {
-            background-color: #f8f9fa;
-            padding: 20px 0;
-            text-align: center;
-            width: 100%;
-        }
-        /* Loader styles */
+        * { font-family: 'Poppins', sans-serif; }
+        .navbar-brand { font-weight: bold; font-size: 1.5rem; }
+        body { display: flex; flex-direction: column; min-height: 100vh; }
+        .container { flex: 1; }
+        footer { background-color: #f8f9fa; padding: 20px 0; text-align: center; width: 100%; }
+
+        /* Full-screen Loader */
         #loading-screen {
             position: fixed;
             top: 0;
@@ -45,67 +31,234 @@
             justify-content: center;
             align-items: center;
             z-index: 9999;
+            transition: opacity 0.5s ease-in-out;
         }
+
         #loading-screen img {
-            width: 100px; /* Adjust as needed */
+            width: 80px;
+            height: 80px;
+            animation: pulse 1.5s infinite ease-in-out alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); opacity: 0.7; }
+            to { transform: scale(1.1); opacity: 1; }
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Persistent Robot GIF at Bottom Right */
+        #corner-robot {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: auto;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            cursor: pointer;
+        }
+
+        #corner-robot.visible {
+            opacity: 1;
+        }
+
+        /* Chatbot Modal */
+        #chatbot-modal {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 300px;
+            height: 400px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        #chatbot-header {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        #chatbot-body {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+
+        #chatbot-body div {
+            margin-bottom: 8px;
+        }
+
+        #chatbot-footer {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ccc;
+        }
+
+        #chatbot-input {
+            flex: 1;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #chatbot-send {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+        #chatbot-close {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <div id="loading-screen">
-        <img src="{{ url_for('static', filename='loader.gif') }}" alt="Loading..." />
-    </div>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">T₹ACK</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse justify-content-center" id="navbarSupportedContent">
-                <ul class="navbar-nav mb-2 mb-lg-0">
-                    <li class="nav-item me-lg-3">
-                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
-                    </li>
-                    <li class="nav-item me-lg-3">
-                        <a class="nav-link" href="{{ url_for('transactions') }}">Transactions</a>
-                    </li>
-                    <li class="nav-item me-lg-3">
-                        <a class="nav-link" href="{{ url_for('statistics') }}">Statistics</a>
-                    </li>
+<!-- Full-screen Loader -->
+<div id="loading-screen">
+    <img src="{{ url_for('static', filename='loader.gif') }}" alt="Loading...">
+</div>
+
+<!-- Persistent Bottom-Right Robot GIF -->
+<img id="corner-robot" src="{{ url_for('static', filename='robot.gif') }}" alt="Click to chat with bot">
+
+<!-- Chatbot Modal -->
+<div id="chatbot-modal">
+    <div id="chatbot-header">
+        Chatbot <span id="chatbot-close">&times;</span>
+    </div>
+    <div id="chatbot-body">
+        <p>Hi! How can I assist you today?</p>
+    </div>
+    <div id="chatbot-footer">
+        <input type="text" id="chatbot-input" placeholder="Type a message...">
+        <button id="chatbot-send">Send</button>
+    </div>
+</div>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">T₹ACK</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-center" id="navbarSupportedContent">
+            <ul class="navbar-nav mb-2 mb-lg-0">
+                <li class="nav-item me-lg-3"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
+                <li class="nav-item me-lg-3"><a class="nav-link" href="{{ url_for('transactions') }}">Transactions</a></li>
+                <li class="nav-item me-lg-3"><a class="nav-link" href="{{ url_for('statistics') }}">Statistics</a></li>
+            </ul>
+        </div>
+        <div class="navbar-nav ms-auto">
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    {{username}}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Logout</a></li>
                 </ul>
             </div>
-            <div class="navbar-nav ms-auto">
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        {{username}}
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Logout</a></li>
-                    </ul>
-                </div>
-            </div>
         </div>
-    </nav>
-
-    <div class="container">
-        {% block content %}
-        {% endblock %}
     </div>
+</nav>
 
-    <footer class="footer bg-dark text-light">
-        <div class="container">
-            <p>&copy; 2025 T₹ACK | Developed by ALOK</p>
-        </div>
-    </footer>
+<div class="container">
+    {% block content %}
+    {% endblock %}
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
-    <script>
-        // Hide the loading screen once the DOM is fully loaded
-        document.addEventListener("DOMContentLoaded", function() {
-            document.getElementById("loading-screen").style.display = "none";
-        });
-    </script>
+<footer class="footer bg-dark text-light">
+    <div class="container">
+        <p>&copy; 2025 T₹ACK | Developed by ALOK</p>
+    </div>
+</footer>
+
+<!-- Add Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    window.addEventListener("load", function() {
+        setTimeout(function() {
+            document.getElementById("loading-screen").classList.add("hidden");
+            setTimeout(() => document.getElementById("loading-screen").style.display = "none", 500);
+            document.getElementById("corner-robot").classList.add("visible");
+        }, 1000);
+    });
+
+    document.getElementById("corner-robot").addEventListener("click", function() {
+        document.getElementById("chatbot-modal").style.display = "flex";
+    });
+
+    document.getElementById("chatbot-close").addEventListener("click", function() {
+        document.getElementById("chatbot-modal").style.display = "none";
+    });
+
+    document.addEventListener("keydown", function(event) {
+        if (event.key === "Escape") {
+            document.getElementById("chatbot-modal").style.display = "none";
+        }
+    });
+
+    document.getElementById("chatbot-input").addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            sendMessage();
+        }
+    });
+
+    async function sendMessage() {
+        let userMessage = document.getElementById("chatbot-input").value.trim();
+        if (!userMessage) return;
+
+        let chatBody = document.getElementById("chatbot-body");
+        chatBody.innerHTML += `<div><strong>You:</strong> ${userMessage}</div>`;
+        chatBody.innerHTML += `<div id="typing"><em>Bot is typing...</em></div>`;
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        try {
+            let response = await fetch("/chatbot", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userMessage })
+            });
+
+            let data = await response.json();
+            document.getElementById("typing").remove();
+            chatBody.innerHTML += `<div><strong>Bot:</strong> ${data.response || "I'm sorry, I didn't understand that."}</div>`;
+        } catch (error) {
+            document.getElementById("typing").remove();
+            chatBody.innerHTML += `<div><strong>Bot:</strong> Error communicating with server.</div>`;
+        }
+
+        document.getElementById("chatbot-input").value = "";
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    document.getElementById("chatbot-send").addEventListener("click", sendMessage);
+</script>
+
 </body>
 </html>

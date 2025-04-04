@@ -2,9 +2,38 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from datetime import datetime
 import sqlite3
 from collections import defaultdict
+import google.generativeai as genai
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+import os
+from flask import Flask, request, jsonify, render_template
+import google.generativeai as genai
+from google.generativeai import configure, list_models
+
+configure(api_key="AIzaSyAbD14tBlyDBLfdARcQ6SNYs3Q-t3Zmw_k")
+
+models = list_models()
+for model in models:
+    print(model.name)
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
+# Configure Gemini
+genai.configure(api_key="AIzaSyAbD14tBlyDBLfdARcQ6SNYs3Q-t3Zmw_k")
+model = genai.GenerativeModel("gemini-1.5-flash-latest")
+@app.route("/chatbot", methods=["POST"])
+def chat():
+    data = request.get_json()
+    user_message = data.get("message", "")
+    
+    try:
+        response = model.generate_content(user_message)
+        reply = response.text
+    except Exception as e:
+        reply = "Error: " + str(e)
+
+    return jsonify({"response": reply})
+
 
 # SQLite database setup
 DATABASE = 'finance_tracker.db'
@@ -82,7 +111,9 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.pop('username', None)
+    session.pop('user_id', None)  # Clear user_id from session
+    session.pop('username', None)  # Clear username from session
+    flash('You have been logged out.', 'success')
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
